@@ -23,7 +23,8 @@ ASCII_ART = r"""
 """
 
 # 签名信息
-SIGNATURE = "v1.0"
+SIGNATURE = "v1.0.5"
+AUTHOR = "By:X1ly?S"
 
 # 颜色常量
 class Colors:
@@ -70,7 +71,7 @@ class OutputFormatter:
             else:  # 最后一行，添加签名
                 # 计算签名的位置，确保其在ascii字符的右下角
                 padding = max_line_length - len(ascii_lines[-1]) + 2  # +2为留一点额外空间
-                print(f"{Colors.TITLE}{line}{' ' * padding}{Colors.DIM}{SIGNATURE}{Colors.RESET}")
+                print(f"{Colors.TITLE}{line}{' ' * padding}{Colors.DIM}{SIGNATURE} {Colors.TITLE}{AUTHOR}{Colors.RESET}")
         
         print()  # 额外的空行
     
