@@ -249,8 +249,8 @@ class DomainComparator:
         self.logger = Logger(debug)
         self.comparator = ComparisonHandler(
             self.logger,
-            Config.DEFAULT_OUTPUT_FILE,
             Config.FOFA_OUTPUT_FILE,
+            Config.DEFAULT_OUTPUT_FILE,
             Config.RESULT_OUTPUT_FILE
         )
     
@@ -262,7 +262,7 @@ class DomainComparator:
             Set[str]: 隐藏域名集合
         """
         self.logger.model(f"比较模块 - 分析隐藏域名: {self.target_domain}")
-        return self.comparator.compare()
+        return self.comparator.compare_domains()
     
     def run(self) -> Set[str]:
         """
