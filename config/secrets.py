@@ -5,4 +5,4 @@
 
 # FOFA API密钥配置
 # 请替换为你自己的FOFA API密钥
-FOFA_API_KEY = "f9d8840876905cbd761cf042e5e661c2" 
+FOFA_API_KEY = "" 

@@ -34,12 +34,14 @@ class Config:
     # FOFA API配置
     FOFA_API_URL = "https://fofa.info/api/v1/search/all"
     FOFA_API_KEY = FOFA_API_KEY  # 使用从secrets.py导入的密钥
-    FOFA_OUTPUT_FILE = "output/fofa_subdomain.txt"            # FOFA结果输出文件
+    FOFA_OUTPUT_FILE = "output/fofa_subdomain.txt"     # FOFA结果输出文件
     FOFA_PAGE_SIZE = 100                               # 每页查询数量，降低以避免429错误
-    FOFA_MAX_PAGES = 3                                 # 最大查询页数，降低以避免429错误
+    FOFA_MAX_PAGES = 50                                # 最大查询页数，增加以获取更多数据
     FOFA_MAX_CONCURRENT = 1                            # 最大并发请求数，降低以避免429错误
-    FOFA_RETRY_COUNT = 3                               # 请求失败重试次数
-    FOFA_RETRY_DELAY = 5                               # 重试间隔（秒）
+    FOFA_RETRY_COUNT = 5                               # 请求失败重试次数，增加以提高成功率
+    FOFA_RETRY_DELAY = 5                               # 重试间隔（秒），增加以避免频率限制
+    FOFA_PAGE_INTERVAL = 2                             # 每页请求之间的间隔时间（秒）
+    FOFA_BACKOFF_FACTOR = 2                            # 重试退避因子，用于指数级增加等待时间
     
     # 比较结果输出文件
     RESULT_OUTPUT_FILE = "output/result.txt"                  # 隐藏域名结果文件
