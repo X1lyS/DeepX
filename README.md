@@ -17,11 +17,11 @@ DeepX是一个功能强大的子域名收集工具，支持多个接口集成（
 git clone https://github.com/yourusername/DeepX.git
 cd DeepX
 
-# 安装依赖
-pip install -r requirements.txt
+# 安装依赖和配置
+python setup.py
 
 # 可选：设置FOFA API密钥
-# 方法1：创建secrets.py文件并添加：FOFA_API_KEY = "your_key"
+# 方法1：创建config/secrets.py文件并添加：FOFA_API_KEY = "your_key"
 # 方法2：设置环境变量：export FOFA_API_KEY="your_key"
 ```
 
@@ -39,6 +39,10 @@ python DeepX.py fofa example.com
 python DeepX.py brute example.com
 python DeepX.py compare example.com
 python DeepX.py all example.com
+
+# 如果已安装为全局命令，也可以使用：
+deepx example.com
+deepx collect example.com
 ```
 
 ### 高级选项
@@ -59,7 +63,7 @@ python DeepX.py collect example.com -o output/result.txt
 
 ## 配置说明
 
-配置选项位于`config.py`文件中，包括：
+配置选项位于`config/config.py`文件中，包括：
 
 - 缓存设置：缓存目录、有效期等
 - 字典爆破设置：字典文件路径、并发数等
@@ -69,21 +73,29 @@ python DeepX.py collect example.com -o output/result.txt
 
 ```
 DeepX/
-├── __init__.py           # 初始化文件
-├── __main__.py           # 主入口模块
-├── cli.py                # 命令行界面
-├── core.py               # 核心功能
-├── config.py             # 配置管理
-├── secrets.py            # 密钥配置（可选）
-├── DeepX.py              # 入口文件
-├── setup.py              # 安装脚本
-├── requirements.txt      # 依赖文件
-├── README.md             # 说明文档
-├── cache/                # 缓存模块
-├── dict/                 # 字典目录
-├── collectors/           # 收集器模块
-├── handlers/             # 处理器模块
-└── utils/                # 工具模块
+├── __init__.py             # 初始化文件
+├── __main__.py             # 主入口模块
+├── DeepX.py                # 入口文件
+├── setup.py                # 安装脚本
+├── requirements.txt        # 依赖文件
+├── README.md               # 说明文档
+├── MANIFEST.in             # 打包配置文件
+├── cache_data/             # 缓存数据目录
+├── data/                   # 字典文件目录
+├── output/                 # 输出结果目录
+├── core/                   # 核心功能模块
+│   ├── __init__.py         # 核心包初始化
+│   ├── core.py             # 核心功能实现
+│   └── cli.py              # 命令行接口
+├── cacher/                 # 缓存处理模块
+├── collectors/             # 收集器模块
+├── config/                 # 配置管理模块
+│   ├── __init__.py
+│   ├── config.py           # 配置定义
+│   └── secrets.py          # 密钥配置（可选）
+├── dict/                   # 字典相关模块
+├── handlers/               # 结果处理模块
+└── utils/                  # 工具模块
 ```
 
 ## 环境变量

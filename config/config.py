@@ -45,7 +45,7 @@ class Config:
     RESULT_OUTPUT_FILE = "output/result.txt"                  # 隐藏域名结果文件
     
     # 缓存配置
-    CACHE_DIR = "cacher"                              # 缓存目录
+    CACHE_DIR = "cache_data"                           # 缓存目录
     CACHE_EXPIRE_DAYS = 3                              # 缓存有效期（天）
     DISABLE_CACHE = False                              # 是否禁用缓存
     
