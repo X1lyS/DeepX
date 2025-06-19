@@ -1,0 +1,9 @@
+include README.md
+include requirements.txt
+include MANIFEST.in
+include deepx/*.py
+recursive-include deepx/cache *.py
+recursive-include deepx/collectors *.py
+recursive-include deepx/handlers *.py
+recursive-include deepx/utils *.py
+recursive-include deepx/data * 
