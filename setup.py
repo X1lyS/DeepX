@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-DeepX 安装脚本
-"""
-
 import os
 import sys
 import platform
@@ -10,13 +5,10 @@ import subprocess
 import argparse
 from setuptools import setup, find_packages
 
-# 导入日志美化模块
 try:
     from utils.logger import init_logger, get_logger
-    # 初始化日志记录器
     logger = init_logger(debug=True, name='DeepX-Setup')
 except ImportError:
-    # 如果导入失败，创建简易的日志记录器
     class SimpleLogger:
         def info(self, msg): print(f"[INFO] {msg}")
         def debug(self, msg): print(f"[DEBUG] {msg}")
@@ -28,25 +20,14 @@ except ImportError:
     logger = SimpleLogger()
     logger.debug("未能导入日志模块，使用简易日志记录器替代")
 
-# 检查Python版本
 REQUIRED_PYTHON_VERSION = (3, 7)
 current_python = sys.version_info[:2]
 
 if current_python < REQUIRED_PYTHON_VERSION:
     logger.error(
-        f"""
-==========================
-错误: 不兼容的Python版本
-==========================
-DeepX需要Python {REQUIRED_PYTHON_VERSION[0]}.{REQUIRED_PYTHON_VERSION[1]}或更高版本，
-但您正在使用Python {current_python[0]}.{current_python[1]}。
-
-请安装兼容的Python版本，然后重试。
-"""
     )
     sys.exit(1)
 
-# 解析命令行参数
 def parse_arguments():
     parser = argparse.ArgumentParser(description="DeepX 安装配置工具")
     parser.add_argument("--skip-deps", action="store_true", 
@@ -58,31 +39,26 @@ def parse_arguments():
     parser.add_argument("command", nargs="?", default="develop",
                       help="setuptools命令 (默认: develop)")
     
-    # 如果没有参数，不解析，返回默认值
     if len(sys.argv) == 1:
         return parser.parse_args(["develop"])
     return parser.parse_args()
 
-# 确保目录存在
 def create_directories():
     logger.info("正在创建必要的目录...")
-    for directory in ['output', 'cache_data', 'data']:
+    for directory in ['output', 'cache_data', 'data', 'dict']:
         if not os.path.exists(directory):
             os.makedirs(directory, exist_ok=True)
             logger.success(f"创建目录: {directory}")
         else:
             logger.debug(f"目录已存在: {directory}")
 
-# 读取README文件
 README_PATH = os.path.join(os.path.dirname(__file__), "README.md")
 with open(README_PATH, "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-# 读取requirements.txt
 with open("requirements.txt", "r", encoding="utf-8") as f:
     required_packages = f.read().splitlines()
 
-# 安装依赖
 def install_dependencies(args):
     if args.skip_deps or args.offline:
         logger.info("跳过依赖安装...")
@@ -92,21 +68,16 @@ def install_dependencies(args):
     try:
         cmd = [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
         
-        # 如果指定了禁用代理，添加--no-proxy选项
         if args.no_proxy:
             cmd.extend(["--no-proxy"])
             logger.debug("启用--no-proxy选项")
         
-        # 详细记录执行的命令
         logger.debug(f"执行命令: {' '.join(cmd)}")
         
-        # 尝试安装
         result = subprocess.run(cmd, capture_output=True, text=True)
         
-        # 检查是否成功
         if result.returncode == 0:
             logger.success("依赖包安装成功！")
-            # 输出安装的包信息
             logger.debug("已安装的依赖包:")
             for pkg in required_packages:
                 logger.debug(f"  - {pkg}")
@@ -142,7 +113,6 @@ def install_dependencies(args):
         response = input().strip().lower()
         return response == 'y' or response == 'yes'
 
-# 检查系统是否支持
 def check_system_compatibility():
     system = platform.system()
     logger.debug(f"检测到操作系统: {system}")
@@ -158,11 +128,10 @@ def check_system_compatibility():
         logger.success(f"系统兼容性检查通过: {system}")
     return True
 
-# 执行setup
 def run_setup(args):
     setup_args = {
         'name': "DeepX",
-        'version': "1.0",
+        'version': "1.0.0",
         'author': "DeepX Team",
         'author_email': "deepx@example.com",
         'description': "多接口集成的子域名收集工具",
@@ -185,28 +154,23 @@ def run_setup(args):
         },
     }
 
-    # 当使用develop模式但未传递其他参数时，仅创建必要文件而不运行setup
     if args.command == "develop" and len(sys.argv) == 1:
         logger.info("跳过setuptools安装过程，仅创建必要的目录和文件。")
         return True
     
-    # 重新构建命令行参数，添加setup.py和用户指定的命令
     setup_args = []
     for arg in sys.argv[1:]:
         if not arg.startswith("--skip-deps") and not arg.startswith("--offline") and not arg.startswith("--no-proxy"):
             setup_args.append(arg)
     
-    # 如果没有命令，添加默认命令
     if not setup_args:
         setup_args.append(args.command)
     
-    # 输出详细的安装信息
     logger.debug("安装详情:")
     logger.debug(f"  命令: {' '.join(setup_args)}")
     logger.debug(f"  包数量: {len(required_packages)}")
     logger.debug(f"  入口点: deepx=core.cli:main")
     
-    # 执行setup
     sys.argv = [sys.argv[0]] + setup_args
     try:
         logger.info("开始执行setuptools安装...")
@@ -242,28 +206,22 @@ def run_setup(args):
         logger.debug(f"异常详情: {str(e)}")
         return False
 
-# 主安装函数
 def main():
     logger.model("====== DeepX 安装程序 ======")
     
-    # 解析命令行参数
     args = parse_arguments()
     logger.debug(f"命令行参数: {args}")
     
-    # 检查系统兼容性
     if not check_system_compatibility():
         logger.error("安装已取消。")
         return
     
-    # 创建必要目录
     create_directories()
     
-    # 安装依赖
     if not install_dependencies(args):
         logger.error("安装已中断。")
         return
     
-    # 执行setup安装
     success = run_setup(args)
     
     if success:

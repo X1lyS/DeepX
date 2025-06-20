@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 DeepX - 多接口集成的子域名收集工具
+专注发现隐藏子域名资产
 
 用法:
     python DeepX.py example.com
@@ -10,15 +11,15 @@ DeepX - 多接口集成的子域名收集工具
     python DeepX.py all example.com
 """
 
-import os
 import sys
-
-# 确保当前目录在Python的导入路径中
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+import asyncio
 
 from core.cli import main
+from utils.asyncio_patch import apply_asyncio_patches
 
 if __name__ == "__main__":
+    # 应用asyncio补丁，确保在Windows上正常工作
+    apply_asyncio_patches()
+    
+    # 运行主函数
     main() 
