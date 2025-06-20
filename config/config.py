@@ -33,6 +33,9 @@ class Config:
     # 输出目录
     OUTPUT_DIR = "output"
     
+    # 缓存配置
+    CACHE_DIR = "cache_data"                           # 缓存目录
+    
     # 时间戳格式
     TIMESTAMP_FORMAT = "%Y%m%d_%H%M%S"
     
@@ -51,16 +54,32 @@ class Config:
     FOFA_OUTPUT_FILE_TEMPLATE = os.path.join(OUTPUT_DIR, "fofa_{domain}_{timestamp}.txt")
     FOFA_PAGE_SIZE = 100                               # 每页查询数量，降低以避免429错误
     FOFA_MAX_PAGES = 50                                # 最大查询页数，增加以获取更多数据
-    FOFA_MAX_CONCURRENT = 2                            # 最大并发请求数，适当增加以提高速度
+    FOFA_MAX_CONCURRENT = 3                            # 最大并发请求数，适当增加以提高速度
     FOFA_RETRY_COUNT = 5                               # 请求失败重试次数，增加以提高成功率
-    FOFA_RETRY_DELAY = 3                               # 重试间隔（秒），优化以避免频率限制
+    FOFA_RETRY_DELAY = 2                               # 重试间隔（秒），优化以避免频率限制
     FOFA_PAGE_INTERVAL = 1                             # 每页请求之间的间隔时间（秒），优化速度
-    FOFA_BACKOFF_FACTOR = 1.5                          # 重试退避因子，用于指数级增加等待时间
+    FOFA_BACKOFF_FACTOR = 0.5                          # 重试退避因子，用于指数级增加等待时间
     
     # 比较结果输出文件
     RESULT_OUTPUT_FILE_TEMPLATE = os.path.join(OUTPUT_DIR, "hidden_{domain}_{timestamp}.txt")
     BRUTE_OUTPUT_FILE_TEMPLATE = os.path.join(OUTPUT_DIR, "brute_{domain}_{timestamp}.txt")
     TOTAL_OUTPUT_FILE_TEMPLATE = os.path.join(OUTPUT_DIR, "total_{domain}_{timestamp}.txt")
+    
+    # 测活模块配置
+    ALIVE_HIDDEN_OUTPUT_FILE_TEMPLATE = os.path.join(OUTPUT_DIR, "alive_hidden_{domain}_{timestamp}.txt")
+    ALIVE_NORMAL_OUTPUT_FILE_TEMPLATE = os.path.join(OUTPUT_DIR, "alive_normal_{domain}_{timestamp}.txt")
+    ALIVE_ALL_OUTPUT_FILE_TEMPLATE = os.path.join(OUTPUT_DIR, "alive_all_{domain}_{timestamp}.txt")
+    ALIVE_TIMEOUT = 5                                  # 测活请求超时时间（秒）
+    ALIVE_MAX_WORKERS = 100                            # 测活最大并发数
+    ALIVE_RETRY_COUNT = 1                              # 测活请求失败重试次数
+    ALIVE_RETRY_DELAY = 0.5                            # 测活重试间隔（秒）
+    ALIVE_CACHE_FILE_TEMPLATE = os.path.join(CACHE_DIR, "alive_{domain}_{timestamp}.json")  # 测活缓存文件模板
+    ALIVE_BATCH_SIZE = 50                              # 测活批处理大小
+    ALIVE_PROTOCOLS = ["https", "http"]                # 测活协议顺序
+    ALIVE_FOLLOW_REDIRECTS = True                      # 是否跟随重定向
+    ALIVE_MAX_REDIRECTS = 3                            # 最大重定向次数
+    ALIVE_CONNECTION_LIMIT = 200                       # 连接池限制
+    ALIVE_CHECK_TITLE = True                           # 是否提取标题
     
     # 具体文件路径（运行时生成）
     DEFAULT_OUTPUT_FILE = ""
@@ -68,9 +87,11 @@ class Config:
     RESULT_OUTPUT_FILE = ""
     BRUTE_OUTPUT_FILE = ""
     TOTAL_OUTPUT_FILE = ""
+    ALIVE_HIDDEN_OUTPUT_FILE = ""
+    ALIVE_NORMAL_OUTPUT_FILE = ""
+    ALIVE_ALL_OUTPUT_FILE = ""
     
-    # 缓存配置
-    CACHE_DIR = "cache_data"                           # 缓存目录
+    # 缓存相关配置
     CACHE_FILE_TEMPLATE = os.path.join(CACHE_DIR, "{domain}_{timestamp}.json")  # 缓存文件模板
     CACHE_EXPIRE_DAYS = 3                              # 缓存有效期（天）
     DISABLE_CACHE = False                              # 是否禁用缓存
@@ -122,6 +143,14 @@ class Config:
         cls.BRUTE_OUTPUT_FILE = cls.BRUTE_OUTPUT_FILE_TEMPLATE.format(
             domain=domain, timestamp=cls.CURRENT_TIMESTAMP)
         cls.TOTAL_OUTPUT_FILE = cls.TOTAL_OUTPUT_FILE_TEMPLATE.format(
+            domain=domain, timestamp=cls.CURRENT_TIMESTAMP)
+        
+        # 生成测活模块文件路径
+        cls.ALIVE_HIDDEN_OUTPUT_FILE = cls.ALIVE_HIDDEN_OUTPUT_FILE_TEMPLATE.format(
+            domain=domain, timestamp=cls.CURRENT_TIMESTAMP)
+        cls.ALIVE_NORMAL_OUTPUT_FILE = cls.ALIVE_NORMAL_OUTPUT_FILE_TEMPLATE.format(
+            domain=domain, timestamp=cls.CURRENT_TIMESTAMP)
+        cls.ALIVE_ALL_OUTPUT_FILE = cls.ALIVE_ALL_OUTPUT_FILE_TEMPLATE.format(
             domain=domain, timestamp=cls.CURRENT_TIMESTAMP)
         
         # 确保缓存目录存在

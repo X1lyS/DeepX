@@ -1,0 +1,6 @@
+www.baidu.com
+www.github.com
+www.google.com
+example1.notexistdomain12345.com
+www.microsoft.com
+example2.notexistdomain12345.com 

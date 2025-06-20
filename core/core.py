@@ -16,6 +16,7 @@ from utils.logger import Logger
 from utils.formatter import init_formatter
 from cacher.manager import CacheManager
 from cacher.dict_builder import DictBuilder
+from handlers.alive import AliveHandler
 
 
 class SubdomainCollector:
@@ -249,13 +250,14 @@ class FofaSubdomainCollector:
 class DomainComparator:
     """域名比较器，用于比较不同来源的域名结果"""
     
-    def __init__(self, target_domain: str, debug: bool = True):
+    def __init__(self, target_domain: str, debug: bool = True, disable_cache: bool = False):
         """
         初始化域名比较器
         
         Args:
             target_domain: 目标域名
             debug: 是否启用调试模式
+            disable_cache: 是否禁用缓存
         """
         self.target_domain = target_domain
         
@@ -282,6 +284,12 @@ class DomainComparator:
             Config.BRUTE_OUTPUT_FILE,
             Config.TOTAL_OUTPUT_FILE
         )
+        
+        # 创建测活处理器
+        self.alive_handler = AliveHandler(self.logger, target_domain, disable_cache)
+        
+        # 缓存禁用状态
+        self.disable_cache = disable_cache
     
     def compare(self) -> Dict[str, Set[str]]:
         """
@@ -294,6 +302,45 @@ class DomainComparator:
         self.logger.model(f"隐藏资产比较模块 - 分析隐藏域名: {self.target_domain}")
         return self.comparator.compare_domains()
     
+    async def check_alive(self, compare_results: Dict[str, Set[str]]) -> Dict[str, Set[str]]:
+        """
+        检查域名存活状态
+        
+        Args:
+            compare_results: 比较结果，包含隐藏域名和总资产
+            
+        Returns:
+            Dict[str, Set[str]]: 测活结果，包含存活和不存活的域名
+        """
+        # 获取隐藏域名和非隐藏域名（普通域名）
+        hidden_domains = compare_results.get('hidden', set())
+        total_domains = compare_results.get('total', set())
+        normal_domains = total_domains - hidden_domains
+        
+        # 执行测活
+        self.logger.model(f"测活模块 - 开始检测域名存活性: {self.target_domain}")
+        alive_results = await self.alive_handler.handle_all_domains(hidden_domains, normal_domains)
+        
+        return alive_results
+    
+    async def run_async(self) -> Dict[str, Set[str]]:
+        """
+        异步运行完整的比较和测活流程
+        
+        Returns:
+            Dict[str, Set[str]]: 完整结果，包含比较结果和测活结果
+        """
+        # 1. 执行比较
+        compare_results = self.compare()
+        
+        # 2. 执行测活
+        alive_results = await self.check_alive(compare_results)
+        
+        # 3. 合并结果
+        results = {**compare_results, **alive_results}
+        
+        return results
+    
     def run(self) -> Dict[str, Set[str]]:
         """
         运行完整的比较流程
@@ -301,6 +348,8 @@ class DomainComparator:
         Returns:
             Dict[str, Set[str]]: 比较结果，包含隐藏域名和总资产
         """
+        # 同步版本，仅执行比较，不执行测活
+        # 测活需要通过异步方法run_async调用
         return self.compare()
 
 

@@ -5,14 +5,15 @@
 import sys
 import asyncio
 import argparse
-from typing import Dict, Set
 import os
 import datetime
+from typing import Dict, Set
 
 from config.config import Config
 from core.core import SubdomainCollector, FofaSubdomainCollector, DomainComparator, DictBruteForcer, DomainProcessor
 from utils.logger import Logger
 from handlers.comparison import ComparisonHandler
+from handlers.alive import AliveHandler
 
 
 class CLI:
@@ -69,6 +70,25 @@ class CLI:
                                   help=f"隐藏域名结果文件 (默认: {Config.RESULT_OUTPUT_FILE})")
         compare_parser.add_argument("-t", "--total", default=Config.TOTAL_OUTPUT_FILE,
                                   help=f"总资产域名结果文件 (默认: {Config.TOTAL_OUTPUT_FILE})")
+        compare_parser.add_argument("--alive", action="store_true",
+                                  help="启用测活 (检查域名是否存活)")
+        compare_parser.add_argument("--no-cache", action="store_true",
+                                  help="禁用域名缓存")
+        
+        alive_parser = subparsers.add_parser("alive", help="测试域名是否存活")
+        alive_parser.add_argument("domain", help="目标域名 (例如: example.com)")
+        alive_parser.add_argument("-d", "--debug", action="store_true", default=True,
+                               help="启用调试输出 (默认已启用)")
+        alive_parser.add_argument("--no-debug", action="store_false", dest="debug",
+                               help="禁用调试输出")
+        alive_parser.add_argument("--input-file", 
+                               help="输入文件，包含要测活的域名列表 (每行一个域名)")
+        alive_parser.add_argument("--hidden-file", default=Config.RESULT_OUTPUT_FILE,
+                               help=f"隐藏域名结果文件 (默认: {Config.RESULT_OUTPUT_FILE})")
+        alive_parser.add_argument("--normal-file", default=Config.FOFA_OUTPUT_FILE,
+                               help=f"普通域名结果文件 (默认: {Config.FOFA_OUTPUT_FILE})")
+        alive_parser.add_argument("--no-cache", action="store_true",
+                               help="禁用域名缓存")
         
         brute_parser = subparsers.add_parser("brute", help="使用累积的字典对子域名进行爆破")
         brute_parser.add_argument("domain", help="目标域名 (例如: example.com)")
@@ -79,7 +99,7 @@ class CLI:
         brute_parser.add_argument("-o", "--output", default=Config.BRUTE_OUTPUT_FILE,
                                help=f"输出文件名 (默认: {Config.BRUTE_OUTPUT_FILE})")
         
-        all_parser = subparsers.add_parser("all", help="执行完整流程：收集、FOFA和比较")
+        all_parser = subparsers.add_parser("all", help="执行完整流程：收集、FOFA、比较和测活")
         all_parser.add_argument("domain", help="目标域名 (例如: example.com)")
         all_parser.add_argument("-d", "--debug", action="store_true", default=True,
                               help="启用调试输出 (默认已启用)")
@@ -92,6 +112,8 @@ class CLI:
                               help=f"缓存有效期 (天，默认: {Config.CACHE_EXPIRE_DAYS})")
         all_parser.add_argument("--enable-brute", action="store_false", dest="no_brute",
                               help="启用字典爆破 (默认禁用)")
+        all_parser.add_argument("--no-alive", action="store_true",
+                              help="禁用测活 (默认启用)")
         
         args = parser.parse_args()
         
@@ -114,6 +136,74 @@ class CLI:
             Config.CACHE_EXPIRE_DAYS = args.cache_days
             
         return args
+
+    @staticmethod
+    async def execute_alive(args) -> None:
+        """执行测活命令"""
+        logger = Logger(args.debug)
+        
+        # 初始化文件路径
+        Config.init_file_paths(args.domain)
+        
+        # 创建测活处理器
+        alive_handler = AliveHandler(logger, args.domain, getattr(args, 'no_cache', False))
+        
+        domains = set()
+        
+        # 如果提供了输入文件，从文件读取域名
+        if hasattr(args, 'input_file') and args.input_file:
+            try:
+                with open(args.input_file, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        domain = line.strip()
+                        if domain:
+                            domains.add(domain)
+                logger.info(f"从文件 {args.input_file} 读取到 {len(domains)} 个域名")
+            except Exception as e:
+                logger.error(f"读取文件 {args.input_file} 失败: {str(e)}")
+                return
+        else:
+            # 从隐藏域名文件和普通域名文件读取域名
+            hidden_domains = set()
+            normal_domains = set()
+            
+            # 读取隐藏域名
+            if os.path.exists(args.hidden_file):
+                try:
+                    with open(args.hidden_file, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            domain = line.strip()
+                            if domain:
+                                hidden_domains.add(domain)
+                    logger.info(f"从文件 {args.hidden_file} 读取到 {len(hidden_domains)} 个隐藏域名")
+                except Exception as e:
+                    logger.error(f"读取文件 {args.hidden_file} 失败: {str(e)}")
+            
+            # 读取普通域名
+            if os.path.exists(args.normal_file):
+                try:
+                    with open(args.normal_file, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            domain = line.strip()
+                            if domain:
+                                normal_domains.add(domain)
+                    logger.info(f"从文件 {args.normal_file} 读取到 {len(normal_domains)} 个普通域名")
+                except Exception as e:
+                    logger.error(f"读取文件 {args.normal_file} 失败: {str(e)}")
+            
+            # 如果两个文件都存在，则分别测活
+            if hidden_domains and normal_domains:
+                await alive_handler.handle_all_domains(hidden_domains, normal_domains)
+                return
+            
+            # 合并域名
+            domains = hidden_domains.union(normal_domains)
+        
+        # 如果有域名，则测活
+        if domains:
+            await alive_handler.handle_async(domains)
+        else:
+            logger.error(f"没有找到需要测活的域名")
     
     @staticmethod
     async def execute_collect(args) -> Dict[str, Set[str]]:
@@ -139,7 +229,7 @@ class CLI:
         return await collector.run()
         
     @staticmethod
-    def execute_compare(args) -> Dict[str, Set[str]]:
+    async def execute_compare(args) -> Dict[str, Set[str]]:
         """执行域名比较命令"""
         logger = Logger(args.debug)
         
@@ -196,7 +286,21 @@ class CLI:
             args.total
         )
         
-        return comparator.compare_domains()
+        compare_results = comparator.compare_domains()
+        
+        # 如果启用了测活，则对比较结果进行测活
+        if getattr(args, 'alive', False):
+            logger.info(f"开始测活...")
+            domain_comparator = DomainComparator(
+                args.domain,
+                debug=args.debug,
+                disable_cache=getattr(args, 'no_cache', False)
+            )
+            alive_results = await domain_comparator.check_alive(compare_results)
+            # 合并结果
+            compare_results.update(alive_results)
+        
+        return compare_results
     
     @staticmethod
     async def execute_brute(args) -> Set[str]:
@@ -287,9 +391,20 @@ class CLI:
         temp_args.result = result_file
         temp_args.total = total_file
         temp_args.from_all = True  # 标记为从完整流程调用
+        temp_args.no_cache = getattr(args, 'no_cache', False)
         
         # 执行比较
-        compare_results = CLI.execute_compare(temp_args)
+        compare_results = await CLI.execute_compare(temp_args)
+        
+        # 5. 执行测活 (除非明确禁用)
+        if not getattr(args, 'no_alive', False):
+            logger.info(f"开始测试域名存活性...")
+            domain_comparator = DomainComparator(
+                args.domain,
+                debug=args.debug,
+                disable_cache=getattr(args, 'no_cache', False)
+            )
+            await domain_comparator.check_alive(compare_results)
         
         logger.success(f"完整流程执行完成: {args.domain}")
         
@@ -301,9 +416,11 @@ class CLI:
         elif args.command == "fofa":
             await self.execute_fofa(args)
         elif args.command == "compare":
-            self.execute_compare(args)
+            await self.execute_compare(args)
         elif args.command == "brute":
             await self.execute_brute(args)
+        elif args.command == "alive":
+            await self.execute_alive(args)
         elif args.command == "all":
             await self.execute_all(args)
 
@@ -313,13 +430,12 @@ def main():
     
     # Windows的事件循环策略已在DeepX.py中设置
     
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    # 创建新的事件循环
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     
     try:
+        # 运行CLI
         loop.run_until_complete(cli.run())
     except KeyboardInterrupt:
         print("\n程序被用户中断")
@@ -327,21 +443,27 @@ def main():
         print(f"程序运行出错: {str(e)}")
     finally:
         # 关闭所有未完成的任务
-        pending = asyncio.all_tasks(loop)
-        for task in pending:
-            task.cancel()
+        try:
+            # 获取所有正在运行的任务
+            pending = asyncio.all_tasks(loop)
             
-        # 让事件循环再运行一次以确保任务取消处理完毕
-        if sys.version_info >= (3, 7):
-            # Python 3.7+ 支持shutdown_asyncgens
+            # 取消所有任务
+            if pending:
+                for task in pending:
+                    task.cancel()
+                
+                # 等待任务取消完成
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            
+            # 关闭事件循环
             loop.run_until_complete(loop.shutdown_asyncgens())
-            
-            # Python 3.9+ 支持shutdown_default_executor
-            if sys.version_info >= (3, 9):
+            if hasattr(loop, 'shutdown_default_executor'):
                 loop.run_until_complete(loop.shutdown_default_executor())
-        
-        # 关闭事件循环
-        loop.close()
+        except Exception as e:
+            print(f"关闭事件循环时出错: {str(e)}")
+        finally:
+            # 关闭事件循环
+            loop.close()
 
 
 if __name__ == "__main__":

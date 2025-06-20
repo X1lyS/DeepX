@@ -213,7 +213,7 @@ class CacheManager:
             deep_domains = set(cache_data.get('deep_domains', []))
             fofa_domains = set(cache_data.get('fofa_domains', []))
             timestamp = cache_data.get('timestamp', 0)
-            cache_date = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+            cache_date = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
             
             self.logger.model(f"缓存命中模块 - 使用 {cache_date} 的缓存数据")
             self.logger.success(f"从缓存中获取到 {len(deep_domains)} 个深度子域名和 {len(fofa_domains)} 个FOFA子域名")

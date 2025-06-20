@@ -1,0 +1,30 @@
+{
+  "domain": "tdxl.swufe.edu.cn",
+  "timestamp": 1750392636.929911,
+  "results": [
+    {
+      "domain": "tdxl.swufe.edu.cn",
+      "url": "https://tdxl.swufe.edu.cn",
+      "is_alive": true,
+      "status_code": 200,
+      "title": "\u767b \u5f55",
+      "content_length": 16447,
+      "response_time": 0.27949976921081543,
+      "final_url": "https://tdxl.swufe.edu.cn/Account/Login.aspx",
+      "protocol": "https",
+      "error": null,
+      "headers": {
+        "Server": "none",
+        "Date": "Fri, 20 Jun 2025 04:10:39 GMT",
+        "Content-Type": "text/html; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Cache-Control": "private",
+        "X-AspNet-Version": "*********",
+        "Set-Cookie": "ASP.NET_SessionId=5ntpozjjjxox5iuzfqewbfph; path=/; HttpOnly; SameSite=Lax",
+        "X-Powered-By": "*******",
+        "Content-Encoding": "gzip"
+      }
+    }
+  ]
+}

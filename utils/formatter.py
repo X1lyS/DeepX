@@ -38,6 +38,8 @@ class Colors:
     RESET = Style.RESET_ALL
     BRIGHT = Style.BRIGHT
     DIM = Style.DIM
+    CRITICAL = Fore.RED     # 添加严重错误的颜色为红色
+    WARNING = Fore.YELLOW   # 添加警告的颜色为黄色
 
 
 class OutputFormatter:
