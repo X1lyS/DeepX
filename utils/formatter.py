@@ -23,7 +23,7 @@ ASCII_ART = r"""
 """
 
 # 签名信息
-SIGNATURE = "v1.0.5"
+SIGNATURE = "v1.1.0"
 AUTHOR = "By:X1ly?S"
 
 # 颜色常量
