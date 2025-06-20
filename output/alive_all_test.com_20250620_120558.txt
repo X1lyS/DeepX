@@ -1,7 +1,0 @@
-https://example1.notexistdomain12345.com [失活]
-https://www.baidu.com [200] [百度一下，你就知道] [507714]
-https://www.github.com [200] [GitHub · Build and ship software on a single, collaborative platform · GitHub] [286859]
-https://www.google.com [失活]
-https://example2.notexistdomain12345.com [失活]
-https://www.microsoft.com [200] [Your request has been blocked. This could be
-                        due to several reasons.] [12623]
